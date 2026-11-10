@@ -64,6 +64,36 @@ La fecha inicial del formulario corresponde al lunes de la semana visible; cámb
 
 ## Organización
 
+### Preparación de Docker y Render (pruebas)
+
+El `Dockerfile` de la raíz construye React y Java, ejecuta las pruebas Maven y empaqueta el frontend como recurso estático de Spring Boot. La aplicación usa el mismo dominio para `/api`. Es una preparación: no se crea ni despliega ningún servicio automáticamente.
+
+1. Inicia Docker Desktop y espera a que el motor Linux esté disponible. Desde la raíz del proyecto ejecuta:
+
+   ```powershell
+   docker build -t ritmo:local .
+   ```
+
+2. Crea fuera del repositorio, por ejemplo en una carpeta privada, un archivo `ritmo-local.env` con los valores siguientes. Sustituye la contraseña por la real; no subas ese archivo a Git. `host.docker.internal` corresponde al equipo anfitrión en Docker Desktop; PostgreSQL debe permitir la conexión desde el contenedor.
+
+   ```text
+   DB_URL=jdbc:postgresql://host.docker.internal:5432/entrenos
+   DB_USER=entrenos_app
+   DB_PASSWORD=TU_CONTRASEÑA
+   ```
+
+3. Ejecuta el contenedor, cambiando la ruta por la ubicación real del archivo:
+
+   ```powershell
+   docker run --rm --name ritmo-local -p 8080:8080 --env-file C:\ruta-privada\ritmo-local.env ritmo:local
+   ```
+
+   Abre `http://localhost:8080`. Si el puerto está ocupado, detén el backend local o usa `-p 8081:8080` y abre el puerto 8081. Para detenerlo, usa `Ctrl+C` en esa terminal. La aplicación ejecuta `schema.sql` al iniciar: prueba con una base de desarrollo, no una base de producción.
+
+Para una futura configuración en Render, crea un Web Service con runtime Docker, raíz del repositorio, `Dockerfile` en la raíz y contexto de compilación en la raíz. Configura `DB_URL` con una URL **JDBC** (`jdbc:postgresql://HOST:PUERTO/BASE`), `DB_USER` y `DB_PASSWORD` por separado; Render asigna `PORT`. Usa PostgreSQL administrado accesible desde el servicio, no `localhost`, y configura TLS de base de datos según el proveedor. Las variables demo son opcionales y deben omitirse para la prueba en nube. Como health check preliminar puede usarse `/`; confirma solo que se sirve la página, no que la base de datos esté disponible.
+
+La aplicación sigue sin estar preparada para usuarios reales en internet: hay registro abierto, tokens en memoria, sin migraciones ni restauración verificadas. El uso de Docker no corrige estas limitaciones. Consulta la ruta del piloto en [arquitectura.md](docs/arquitectura.md).
+
 ### Progreso y seguridad
 
 En el menú lateral selecciona **Mi progreso** o **Progreso de atletas**; en pantallas pequeñas está en la navegación superior. El entrenador puede elegir un atleta vinculado. Filtra por periodo (hasta 366 días) y tipo de sesión; las tarjetas muestran feedback registrado, distancia de carrera, tiempo y ritmo global. El historial abre la sesión para revisar sus resultados.

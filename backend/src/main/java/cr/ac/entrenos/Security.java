@@ -18,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.HttpMethod;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -70,7 +71,8 @@ class Security {
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, TokenFilter filter) throws Exception {
         return http.csrf(csrf -> csrf.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(a -> a.requestMatchers("/api/auth/login", "/api/auth/register-coach").permitAll().anyRequest().authenticated())
+            .authorizeHttpRequests(a -> a.requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register-coach").permitAll().anyRequest().authenticated())
             .exceptionHandling(e -> e.authenticationEntryPoint((req, res, ex) -> res.sendError(401)))
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).build();
     }
